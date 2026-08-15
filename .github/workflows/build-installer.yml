@@ -1,0 +1,55 @@
+name: Build Installer (Personal OS)
+
+on:
+  workflow_dispatch: {}
+  push:
+    branches: [main]
+    tags: ['personal-os-v*.*.*']
+    paths:
+      - 'personal-os/**'
+      - '.github/workflows/build-installer.yml'
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: personal-os
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Instalar dependências do backend
+        working-directory: personal-os/backend
+        run: npm ci --omit=dev
+
+      - name: Instalar dependências e buildar o frontend
+        working-directory: personal-os/frontend
+        run: |
+          npm ci
+          npm run build
+
+      - name: Instalar dependências do app de desktop
+        working-directory: personal-os/electron
+        run: npm ci
+
+      - name: Recompilar módulos nativos para o Electron
+        working-directory: personal-os/electron
+        run: npm run rebuild
+
+      - name: Empacotar o instalador (.exe)
+        working-directory: personal-os/electron
+        run: npx electron-builder --win nsis --publish ${{ startsWith(github.ref, 'refs/tags/personal-os-v') && 'always' || 'never' }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Anexar o instalador ao workflow
+        uses: actions/upload-artifact@v4
+        with:
+          name: Personal-OS-Setup
+          path: personal-os/electron/dist/*.exe
+          retention-days: 30
