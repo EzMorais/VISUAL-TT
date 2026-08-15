@@ -4,14 +4,18 @@ import AgendaPanel from './components/AgendaPanel';
 import TaskPanel from './components/TaskPanel';
 import AIChat from './components/AIChat';
 import BriefingPanel from './components/BriefingPanel';
+import FinancePanel from './components/FinancePanel';
+import DashboardPanel from './components/DashboardPanel';
 import QuickModal from './components/QuickModal';
 import { health } from './services/api';
 
 const TABS = [
-  { id: 'agenda',   label: 'Agenda',   icon: '📅' },
-  { id: 'tasks',    label: 'Tarefas',  icon: '✅' },
-  { id: 'ai',       label: 'IA',       icon: '🤖' },
-  { id: 'briefing', label: 'Briefing', icon: '☀️' },
+  { id: 'dashboard', label: 'Painel',    icon: '🎯' },
+  { id: 'agenda',    label: 'Agenda',    icon: '📅' },
+  { id: 'tasks',     label: 'Tarefas',   icon: '✅' },
+  { id: 'finance',   label: 'Financeiro', icon: '💰' },
+  { id: 'ai',        label: 'IA',        icon: '🤖' },
+  { id: 'briefing',  label: 'Briefing',  icon: '☀️' },
 ];
 
 export default function App() {
@@ -82,10 +86,12 @@ export default function App() {
   }
 
   const panelContent = {
-    agenda:   <AgendaPanel />,
-    tasks:    <TaskPanel />,
-    ai:       <AIChat />,
-    briefing: <BriefingPanel />,
+    dashboard: <DashboardPanel />,
+    agenda:    <AgendaPanel />,
+    tasks:     <TaskPanel />,
+    finance:   <FinancePanel />,
+    ai:        <AIChat />,
+    briefing:  <BriefingPanel />,
   };
 
   return (
@@ -117,6 +123,10 @@ export default function App() {
               <div className="fab-item">
                 <span className="fab-item-label">Lembrete</span>
                 <button className="fab-item-btn" onClick={() => { setModal('reminder'); setFabOpen(false); }}>⏰</button>
+              </div>
+              <div className="fab-item">
+                <span className="fab-item-label">Financeiro</span>
+                <button className="fab-item-btn" onClick={() => { goTab('finance'); }}>💰</button>
               </div>
               <div className="fab-item">
                 <span className="fab-item-label">Perguntar à IA</span>
@@ -156,9 +166,11 @@ export default function App() {
       {/* ── Desktop grid ────────────────────────────────── */}
       {!isMobile && (
         <div className="desktop-grid">
+          <DashboardPanel />
           <AgendaPanel />
-          <AIChat />
           <TaskPanel />
+          <FinancePanel />
+          <AIChat />
           <BriefingPanel />
         </div>
       )}

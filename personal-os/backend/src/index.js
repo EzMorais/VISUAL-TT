@@ -23,6 +23,8 @@ app.use('/api/tasks',     require('./routes/tasks'));
 app.use('/api/ai',        require('./routes/ai'));
 app.use('/api/briefing',  require('./routes/briefing'));
 app.use('/api/reminders', require('./routes/reminders'));
+app.use('/api/finance',   require('./routes/finance'));
+app.use('/api/voice',     require('./routes/voice'));
 
 // Google OAuth callback page
 app.get('/api/auth/google/callback', (req, res) => {

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import VoiceButton from './VoiceButton';
 
 const DIAS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
 const MESES = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
@@ -29,6 +30,7 @@ export default function Header({ isOnline }) {
       </div>
 
       <div className="header-status">
+        <VoiceButton />
         <div className={`status-dot ${isOnline ? '' : 'offline'}`} />
         <span style={{ display: 'none' }}>{isOnline ? 'Online' : 'Offline'}</span>
       </div>

@@ -18,6 +18,7 @@ Dashboard no Windows · App no iPhone · Bot no WhatsApp · Conexão via Tailsca
 ![WhatsApp](https://img.shields.io/badge/WhatsApp-nativo-25D366?style=flat-square&logo=whatsapp&logoColor=white)
 ![Tailscale](https://img.shields.io/badge/Tailscale-VPN-000000?style=flat-square&logo=tailscale&logoColor=white)
 ![PWA](https://img.shields.io/badge/PWA-iOS%20%2F%20Android-5A0FC8?style=flat-square)
+![Electron](https://img.shields.io/badge/Electron-App%20Desktop-47848F?style=flat-square&logo=electron&logoColor=white)
 
 </div>
 
@@ -28,6 +29,26 @@ Dashboard no Windows · App no iPhone · Bot no WhatsApp · Conexão via Tailsca
 Personal OS é um **assistente pessoal que roda no seu próprio computador** e te acompanha onde você estiver. Ele conecta sua agenda, suas tarefas e uma IA em um único sistema — acessível pelo dashboard no Windows, pelo iPhone como um app instalado, e pelo WhatsApp para acesso rápido sem abrir nada.
 
 Você não depende de nenhum serviço externo pago. Tudo roda localmente, seus dados ficam com você, e o Tailscale mantém a conexão segura entre todos os dispositivos de qualquer lugar do mundo.
+
+---
+
+## Instalação de 1 clique (Windows)
+
+Não precisa mexer em terminal nem entender de código. Baixe o projeto e rode um único arquivo:
+
+```
+Instalar-Personal-OS.bat
+```
+
+Esse instalador:
+
+- ✅ Instala tudo sozinho (backend, frontend, app de desktop)
+- ✅ Cria um **ícone na Área de Trabalho** — "Personal OS", como qualquer app
+- ✅ Cria atalho no **Menu Iniciar**
+- ✅ Configura o app para **abrir sozinho quando o Windows liga**
+- ✅ Abre o Personal OS em uma janela própria (não é uma aba do navegador)
+
+Se quiser gerar um instalador `.exe` de verdade — para guardar, copiar para outro PC ou subir no seu Google Drive — rode `Criar-Instalador-Exe.bat`. Ele empacota tudo em `electron\dist\Personal OS Setup.exe`, pronto para 2 cliques em qualquer Windows.
 
 ---
 
@@ -53,6 +74,15 @@ O bot usa sua conta pessoal do WhatsApp via QR code — sem precisar de conta bu
 
 ### 🔒 Acesso remoto via Tailscale
 Com o Tailscale instalado no computador e no iPhone, o dashboard fica acessível de qualquer lugar — em casa, no trabalho, na rua, no 4G — com conexão criptografada ponto a ponto.
+
+### 💰 Área financeira
+Contas, transações, orçamento por categoria e metas de economia. Registre gastos e receitas pelo dashboard, por voz ou direto no WhatsApp (`gasto 50 mercado`, `saldo`, `extrato`). O saldo, o resultado do mês e o progresso de cada meta ficam sempre visíveis.
+
+### 🎯 Painel de objetivos com gráficos
+Uma aba só para responder "o que eu preciso fazer agora": prioridades do dia (tarefas urgentes, próximo compromisso, orçamento estourado) e gráficos visuais — anel de tarefas concluídas, barras de gasto dos últimos 7 dias e anéis de progresso de cada meta.
+
+### 🎙️ Comando de voz + Siri
+Segure o botão de microfone no dashboard e fale — funciona em português, direto do Safari no iPhone. Também dá para acionar por **Atalho da Siri** ("Ei Siri, Personal OS...") usando a mesma API. Veja [`SIRI-SHORTCUTS.md`](./SIRI-SHORTCUTS.md).
 
 ---
 
@@ -191,6 +221,11 @@ Mande mensagem para você mesmo no WhatsApp. O bot responde instantaneamente.
 | `tarefas` | Lista de tarefas pendentes por prioridade |
 | `tarefa Ligar para o fornecedor` | Cria uma nova tarefa |
 | `lembrar 15:30 Buscar os filhos` | Cria lembrete para às 15:30 |
+| `saldo` | Saldo total de todas as contas |
+| `extrato` | Resumo financeiro do mês + top categorias |
+| `gasto 50 mercado` | Registra um gasto de R$50 em "mercado" |
+| `receita 1000 salário` | Registra uma entrada de R$1000 |
+| `metas` | Progresso das metas de economia |
 | `ajuda` | Mostra todos os comandos |
 | *qualquer outra mensagem* | Resposta da IA com contexto |
 
@@ -317,19 +352,19 @@ Sem o Google Calendar, a agenda funciona como um espaço para criar eventos manu
 
 O dashboard adapta a visualização conforme o dispositivo:
 
-**Computador** — quatro painéis simultâneos em grade:
+**Computador** — seis painéis simultâneos em grade:
 
 ```
-┌─────────────────┬─────────────────┐
-│   📅  Agenda    │   🤖  IA Chat   │
-│                 │                 │
-├─────────────────┼─────────────────┤
-│   ✅  Tarefas   │   ☀️  Briefing  │
-│                 │                 │
-└─────────────────┴─────────────────┘
+┌───────────────┬───────────────┬───────────────┐
+│  🎯  Painel   │  📅  Agenda   │  ✅  Tarefas  │
+│               │               │               │
+├───────────────┼───────────────┼───────────────┤
+│  💰 Financ.   │  🤖  IA Chat  │ ☀️  Briefing  │
+│               │               │               │
+└───────────────┴───────────────┴───────────────┘
 ```
 
-**iPhone** — painel único com navegação por abas e **swipe horizontal** para trocar de seção. Botão ⚡ flutuante para ações rápidas (nova tarefa, lembrete, IA) sem sair da tela.
+**iPhone** — painel único com navegação por abas e **swipe horizontal** para trocar de seção. Botão ⚡ flutuante para ações rápidas (nova tarefa, lembrete, financeiro, IA). Botão 🎙️ no topo para comando de voz em qualquer tela.
 
 ---
 
@@ -346,6 +381,8 @@ O dashboard adapta a visualização conforme o dispositivo:
 | Mobile | PWA · Workbox · `safe-area-inset` iOS |
 | Rede privada | Tailscale (WireGuard) |
 | Banco de dados | SQLite local — sem servidor externo |
+| App de desktop | Electron + electron-builder (instalador NSIS) |
+| Voz | Web Speech API (reconhecimento + síntese) |
 
 ---
 
@@ -353,8 +390,15 @@ O dashboard adapta a visualização conforme o dispositivo:
 
 ```
 personal-os/
-├── start.bat                   ← iniciar (modo local)
+├── Instalar-Personal-OS.bat    ← instalador de 1 clique (app + atalhos)
+├── Criar-Instalador-Exe.bat    ← gera Personal-OS-Setup.exe distribuível
+├── start.bat                   ← iniciar (modo local, sem instalar app)
 ├── start-tailscale.bat         ← iniciar (modo Tailscale)
+├── SIRI-SHORTCUTS.md           ← guia do Atalho da Siri
+│
+├── electron/                   ← empacota o dashboard como app Windows
+│   ├── main.js                 ← janela + bandeja + sobe o backend
+│   └── package.json            ← config do electron-builder (NSIS)
 │
 ├── backend/
 │   └── src/
@@ -362,7 +406,7 @@ personal-os/
 │       ├── config/             ← variáveis de ambiente
 │       ├── db/                 ← SQLite + schema
 │       ├── services/
-│       │   ├── whatsapp.js     ← bot + comandos
+│       │   ├── whatsapp.js     ← bot + comandos (agenda/tarefas/financeiro)
 │       │   ├── calendar.js     ← Google Calendar
 │       │   ├── ai.js           ← Claude (chat + briefing)
 │       │   ├── briefing.js     ← geração do resumo diário
@@ -372,7 +416,9 @@ personal-os/
 │           ├── tasks.js
 │           ├── ai.js
 │           ├── briefing.js
-│           └── reminders.js
+│           ├── reminders.js
+│           ├── finance.js      ← contas, transações, orçamento, metas
+│           └── voice.js        ← comando de voz / Siri Shortcuts
 │
 └── frontend/
     └── src/
@@ -380,9 +426,12 @@ personal-os/
         ├── index.css           ← design system + breathing animations
         ├── services/api.js     ← chamadas ao backend
         └── components/
-            ├── Header.jsx      ← relógio + status
+            ├── Header.jsx      ← relógio + status + botão de voz
+            ├── DashboardPanel.jsx ← prioridades + gráficos de objetivos
             ├── AgendaPanel.jsx
             ├── TaskPanel.jsx
+            ├── FinancePanel.jsx    ← área financeira
+            ├── VoiceButton.jsx     ← mic (Web Speech API) + TTS
             ├── AIChat.jsx
             ├── BriefingPanel.jsx
             └── QuickModal.jsx  ← criação rápida mobile

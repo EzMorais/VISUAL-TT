@@ -1,0 +1,51 @@
+{
+  "name": "personal-os-desktop",
+  "version": "1.0.0",
+  "description": "Personal OS — matriz de comando pessoal em app de desktop",
+  "main": "main.js",
+  "private": true,
+  "scripts": {
+    "start": "electron .",
+    "rebuild": "electron-rebuild --force --module-dir ../backend",
+    "dist": "npm run rebuild && electron-builder --win nsis"
+  },
+  "devDependencies": {
+    "electron": "^31.0.0",
+    "electron-builder": "^24.13.3",
+    "@electron/rebuild": "^3.6.0"
+  },
+  "build": {
+    "appId": "com.personalos.desktop",
+    "productName": "Personal OS",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "main.js",
+      "trayicon.png"
+    ],
+    "extraResources": [
+      {
+        "from": "../backend",
+        "to": "backend",
+        "filter": [
+          "**/*",
+          "!data/*.db*",
+          "!data/whatsapp-session",
+          "!.env"
+        ]
+      }
+    ],
+    "win": {
+      "target": "nsis"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Personal OS"
+    }
+  }
+}

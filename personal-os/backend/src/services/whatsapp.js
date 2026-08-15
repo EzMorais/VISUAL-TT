@@ -5,6 +5,10 @@ const { getEventsToday, getEventsTomorrow, formatEvent } = require('./calendar')
 const { chat } = require('./ai');
 const { getDB } = require('../db/database');
 
+const fmt = (n) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(n ?? 0);
+const curMonth = () => new Date().toISOString().slice(0, 7);
+const toAmount = (str) => parseFloat(String(str).replace(/\./g, '').replace(',', '.'));
+
 let client;
 let myNumber; // formato: "5511999999999@c.us"
 
@@ -35,6 +39,13 @@ function helpText() {
 ✅ *tarefas* — Tarefas pendentes
 ➕ *tarefa [título]* — Criar tarefa
 ⏰ *lembrar HH:MM mensagem* — Criar lembrete
+
+💰 *saldo* — Saldo total
+📊 *extrato* — Resumo financeiro do mês
+➖ *gasto 50 mercado* — Registrar gasto
+➕ *receita 1000 salário* — Registrar entrada
+🎯 *metas* — Metas de economia
+
 ❓ *ajuda* — Esta mensagem
 
 Qualquer outra mensagem → IA responde!`;
@@ -91,6 +102,53 @@ async function handleCommand(body) {
     const today = new Date().toISOString().split('T')[0];
     db.prepare(`INSERT INTO reminders (message, remind_at) VALUES (?, ?)`).run(message, `${today}T${time}:00`);
     return `⏰ Lembrete criado: "${message}" às ${time}`;
+  }
+
+  if (text === 'saldo') {
+    const balance = db.prepare(`SELECT COALESCE(SUM(balance),0) AS v FROM accounts`).get().v;
+    return `💰 Saldo total: *${fmt(balance)}*`;
+  }
+
+  if (text === 'extrato') {
+    const month = curMonth();
+    const income = db.prepare(`SELECT COALESCE(SUM(amount),0) AS v FROM transactions WHERE type='income' AND strftime('%Y-%m',date)=?`).get(month).v;
+    const expense = db.prepare(`SELECT COALESCE(SUM(amount),0) AS v FROM transactions WHERE type='expense' AND strftime('%Y-%m',date)=?`).get(month).v;
+    const cats = db.prepare(
+      `SELECT category, SUM(amount) AS total FROM transactions
+       WHERE type='expense' AND strftime('%Y-%m',date)=? GROUP BY category ORDER BY total DESC LIMIT 5`
+    ).all(month);
+    let out = `📊 *Resumo do mês*\n\n↑ Entradas: ${fmt(income)}\n↓ Saídas: ${fmt(expense)}\n= Resultado: ${fmt(income - expense)}`;
+    if (cats.length) out += `\n\n*Top gastos:*\n` + cats.map(c => `  ${c.category}: ${fmt(c.total)}`).join('\n');
+    return out;
+  }
+
+  if (text === 'metas') {
+    const goals = db.prepare(`SELECT * FROM goals ORDER BY created_at DESC`).all();
+    if (!goals.length) return '🎯 Nenhuma meta cadastrada ainda.';
+    return `🎯 *Metas de economia*\n\n` + goals.map(g => {
+      const pct = g.target_amount ? Math.min(100, Math.round((g.current_amount / g.target_amount) * 100)) : 0;
+      return `${g.name}\n  ${fmt(g.current_amount)} / ${fmt(g.target_amount)} (${pct}%)`;
+    }).join('\n\n');
+  }
+
+  const gastoMatch = body.match(/^gast(?:ei|o)\s+([\d.,]+)\s+(?:com|em|de)?\s*(.+)/i);
+  if (gastoMatch) {
+    const amount = toAmount(gastoMatch[1]);
+    const description = gastoMatch[2].trim();
+    if (!amount || Number.isNaN(amount)) return '❌ Não entendi o valor. Ex: gasto 50 mercado';
+    db.prepare(`INSERT INTO transactions (type, amount, description, category, date) VALUES ('expense', ?, ?, 'outros', date('now'))`)
+      .run(Math.abs(amount), description);
+    return `➖ Gasto registrado: *${fmt(amount)}* — ${description}`;
+  }
+
+  const receitaMatch = body.match(/^receita\s+([\d.,]+)\s+(?:de|com)?\s*(.+)/i);
+  if (receitaMatch) {
+    const amount = toAmount(receitaMatch[1]);
+    const description = receitaMatch[2].trim();
+    if (!amount || Number.isNaN(amount)) return '❌ Não entendi o valor. Ex: receita 1000 salário';
+    db.prepare(`INSERT INTO transactions (type, amount, description, category, date) VALUES ('income', ?, ?, 'outros', date('now'))`)
+      .run(Math.abs(amount), description);
+    return `➕ Receita registrada: *${fmt(amount)}* — ${description}`;
   }
 
   if (text === 'ajuda' || text === 'help') {

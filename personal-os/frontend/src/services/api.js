@@ -37,6 +37,31 @@ export const briefing = {
   generate: () => req('/briefing/generate', { method: 'POST' }),
 };
 
+export const finance = {
+  summary: (month) => req(`/finance/summary${month ? `?month=${month}` : ''}`),
+  transactions: (params = {}) => {
+    const qs = new URLSearchParams(params).toString();
+    return req(`/finance/transactions${qs ? `?${qs}` : ''}`);
+  },
+  createTransaction: (data) => req('/finance/transactions', { method: 'POST', body: data }),
+  removeTransaction: (id) => req(`/finance/transactions/${id}`, { method: 'DELETE' }),
+  accounts: () => req('/finance/accounts'),
+  createAccount: (data) => req('/finance/accounts', { method: 'POST', body: data }),
+  updateAccount: (id, data) => req(`/finance/accounts/${id}`, { method: 'PUT', body: data }),
+  removeAccount: (id) => req(`/finance/accounts/${id}`, { method: 'DELETE' }),
+  budgets: (month) => req(`/finance/budgets${month ? `?month=${month}` : ''}`),
+  createBudget: (data) => req('/finance/budgets', { method: 'POST', body: data }),
+  goals: () => req('/finance/goals'),
+  createGoal: (data) => req('/finance/goals', { method: 'POST', body: data }),
+  addToGoal: (id, amount) => req(`/finance/goals/${id}/add`, { method: 'PUT', body: { amount } }),
+  removeGoal: (id) => req(`/finance/goals/${id}`, { method: 'DELETE' }),
+  textSummary: () => req('/finance/text-summary'),
+};
+
+export const voice = {
+  command: (command, sessionId = 'voice') => req('/voice/command', { method: 'POST', body: { command, sessionId } }),
+};
+
 export const health = {
   check: () => req('/health'),
 };
