@@ -41,6 +41,7 @@ export default defineConfig({
     }),
   ],
   server: {
+    host: '0.0.0.0', // accessible over Tailscale / local network in dev mode
     port: 5173,
     proxy: {
       '/api': {
@@ -48,5 +49,9 @@ export default defineConfig({
         changeOrigin: true,
       },
     },
+  },
+  build: {
+    outDir: '../backend/public',
+    emptyOutDir: true,
   },
 });

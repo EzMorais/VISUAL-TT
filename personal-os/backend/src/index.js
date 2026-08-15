@@ -2,6 +2,8 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
+const path = require('path');
+const fs = require('fs');
 const config = require('./config');
 const { initDB } = require('./db/database');
 const { initWhatsApp, sendMessage } = require('./services/whatsapp');
@@ -10,14 +12,17 @@ const { initScheduler, setSendFn: setSchedulerSend } = require('./services/sched
 
 const app = express();
 
-app.use(helmet());
-app.use(cors({ origin: config.FRONTEND_URL, credentials: true }));
+// Tailscale handles network-layer auth; allow any origin so the PWA works
+// regardless of which Tailscale IP the iPhone uses to reach this machine.
+app.use(helmet({ contentSecurityPolicy: false }));
+app.use(cors({ origin: true, credentials: true }));
 app.use(express.json());
 
-app.use('/api/agenda', require('./routes/agenda'));
-app.use('/api/tasks', require('./routes/tasks'));
-app.use('/api/ai', require('./routes/ai'));
-app.use('/api/briefing', require('./routes/briefing'));
+app.use('/api/agenda',    require('./routes/agenda'));
+app.use('/api/tasks',     require('./routes/tasks'));
+app.use('/api/ai',        require('./routes/ai'));
+app.use('/api/briefing',  require('./routes/briefing'));
+app.use('/api/reminders', require('./routes/reminders'));
 
 // Google OAuth callback page
 app.get('/api/auth/google/callback', (req, res) => {
@@ -38,6 +43,16 @@ app.get('/api/health', (req, res) => {
   });
 });
 
+// Serve built React frontend (Tailscale / production mode)
+const PUBLIC_DIR = path.join(__dirname, '../public');
+if (fs.existsSync(PUBLIC_DIR)) {
+  app.use(express.static(PUBLIC_DIR));
+  // SPA fallback — all non-API routes serve index.html
+  app.get('*', (req, res) => {
+    res.sendFile(path.join(PUBLIC_DIR, 'index.html'));
+  });
+}
+
 async function start() {
   initDB();
 
@@ -49,9 +64,12 @@ async function start() {
   // WhatsApp starts last (shows QR code, may take time)
   await initWhatsApp();
 
-  app.listen(config.PORT, () => {
-    console.log(`\n🚀 Personal OS Backend: http://localhost:${config.PORT}`);
-    console.log(`🌐 Frontend esperado em: ${config.FRONTEND_URL}`);
+  // Bind to 0.0.0.0 so Tailscale (and local network) can reach this server
+  app.listen(config.PORT, '0.0.0.0', () => {
+    console.log(`\n🚀 Personal OS: http://localhost:${config.PORT}`);
+    if (config.TAILSCALE_IP) {
+      console.log(`🔒 Tailscale:    http://${config.TAILSCALE_IP}:${config.PORT}`);
+    }
     console.log(`☀️  Briefing diário às ${config.BRIEFING_HOUR}:00 (${config.TIMEZONE})\n`);
   });
 }

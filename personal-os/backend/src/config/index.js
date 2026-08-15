@@ -14,6 +14,7 @@ module.exports = {
   GOOGLE_CALENDAR_ID: process.env.GOOGLE_CALENDAR_ID || 'primary',
 
   WHATSAPP_PHONE: process.env.WHATSAPP_PHONE,
+  TAILSCALE_IP: process.env.TAILSCALE_IP,
 
   BRIEFING_HOUR: parseInt(process.env.BRIEFING_HOUR || '7'),
   DB_PATH: process.env.DB_PATH || './data/personal-os.db',
