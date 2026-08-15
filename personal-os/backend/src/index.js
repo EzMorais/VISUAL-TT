@@ -30,6 +30,9 @@ app.use('/api/briefing',  require('./routes/briefing'));
 app.use('/api/reminders', require('./routes/reminders'));
 app.use('/api/finance',   require('./routes/finance'));
 app.use('/api/voice',     require('./routes/voice'));
+app.use('/api/terminal',  require('./routes/terminal'));
+app.use('/api/diagnostics', require('./routes/diagnostics'));
+app.use('/api/usage',     require('./routes/usage'));
 
 // Google OAuth callback page
 app.get('/api/auth/google/callback', (req, res) => {
@@ -63,6 +66,34 @@ if (fs.existsSync(PUBLIC_DIR)) {
     res.sendFile(path.join(PUBLIC_DIR, 'index.html'));
   });
 }
+
+// Global error handler — any route that throws lands here instead of
+// crashing silently. Logged + diagnosed the same way frontend errors are,
+// so the Terminal tab becomes a single place to see what broke anywhere.
+app.use((err, req, res, next) => {
+  console.error(`Erro em ${req.method} ${req.path}:`, err.message);
+  try {
+    const { getDB } = require('./db/database');
+    const { broadcast } = require('./services/realtime');
+    const { diagnoseError } = require('./services/ai');
+    const db = getDB();
+    const r = db.prepare(
+      `INSERT INTO error_log (source, message, stack, context) VALUES ('backend', ?, ?, ?)`
+    ).run(err.message, err.stack || null, `${req.method} ${req.path}`);
+    const entry = db.prepare(`SELECT * FROM error_log WHERE id = ?`).get(r.lastInsertRowid);
+    broadcast('diagnostics:error', entry);
+    diagnoseError({ source: 'backend', message: err.message, stack: err.stack, context: `${req.method} ${req.path}` })
+      .then((diagnosis) => {
+        if (!diagnosis) return;
+        db.prepare(`UPDATE error_log SET diagnosis = ? WHERE id = ?`).run(diagnosis, entry.id);
+        broadcast('diagnostics:diagnosed', { id: entry.id, diagnosis });
+      })
+      .catch(() => {});
+  } catch { /* logging must never itself crash the app */ }
+
+  if (res.headersSent) return next(err);
+  res.status(500).json({ error: 'Erro interno' });
+});
 
 async function start() {
   initDB();

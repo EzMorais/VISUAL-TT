@@ -18,4 +18,12 @@ module.exports = {
 
   BRIEFING_HOUR: parseInt(process.env.BRIEFING_HOUR || '7'),
   DB_PATH: process.env.DB_PATH || './data/personal-os.db',
+
+  // Optional — only set these if you want an estimated R$ cost on the "Uso"
+  // tab. Check current pricing at https://console.anthropic.com before
+  // filling in, since these values are never verified against real billing.
+  CLAUDE_INPUT_PRICE_PER_1M: process.env.CLAUDE_INPUT_PRICE_PER_1M
+    ? parseFloat(process.env.CLAUDE_INPUT_PRICE_PER_1M) : null,
+  CLAUDE_OUTPUT_PRICE_PER_1M: process.env.CLAUDE_OUTPUT_PRICE_PER_1M
+    ? parseFloat(process.env.CLAUDE_OUTPUT_PRICE_PER_1M) : null,
 };

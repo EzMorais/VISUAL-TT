@@ -6,17 +6,22 @@ import AIChat from './components/AIChat';
 import BriefingPanel from './components/BriefingPanel';
 import FinancePanel from './components/FinancePanel';
 import DashboardPanel from './components/DashboardPanel';
+import TerminalPanel from './components/TerminalPanel';
+import UsagePanel from './components/UsagePanel';
 import QuickModal from './components/QuickModal';
 import UpdateBanner from './components/UpdateBanner';
+import ErrorBoundary from './components/ErrorBoundary';
 import { health } from './services/api';
 
 const TABS = [
-  { id: 'dashboard', label: 'Painel',    icon: '🎯' },
-  { id: 'agenda',    label: 'Agenda',    icon: '📅' },
-  { id: 'tasks',     label: 'Tarefas',   icon: '✅' },
+  { id: 'dashboard', label: 'Painel',     icon: '🎯' },
+  { id: 'agenda',    label: 'Agenda',     icon: '📅' },
+  { id: 'tasks',     label: 'Tarefas',    icon: '✅' },
   { id: 'finance',   label: 'Financeiro', icon: '💰' },
-  { id: 'ai',        label: 'IA',        icon: '🤖' },
-  { id: 'briefing',  label: 'Briefing',  icon: '☀️' },
+  { id: 'ai',        label: 'IA',         icon: '🤖' },
+  { id: 'briefing',  label: 'Briefing',   icon: '☀️' },
+  { id: 'terminal',  label: 'Terminal',   icon: '💻' },
+  { id: 'usage',     label: 'Uso',        icon: '📊' },
 ];
 
 export default function App() {
@@ -87,12 +92,14 @@ export default function App() {
   }
 
   const panelContent = {
-    dashboard: <DashboardPanel />,
-    agenda:    <AgendaPanel />,
-    tasks:     <TaskPanel />,
-    finance:   <FinancePanel />,
-    ai:        <AIChat />,
-    briefing:  <BriefingPanel />,
+    dashboard: <ErrorBoundary name="Painel"><DashboardPanel /></ErrorBoundary>,
+    agenda:    <ErrorBoundary name="Agenda"><AgendaPanel /></ErrorBoundary>,
+    tasks:     <ErrorBoundary name="Tarefas"><TaskPanel /></ErrorBoundary>,
+    finance:   <ErrorBoundary name="Financeiro"><FinancePanel /></ErrorBoundary>,
+    ai:        <ErrorBoundary name="IA"><AIChat /></ErrorBoundary>,
+    briefing:  <ErrorBoundary name="Briefing"><BriefingPanel /></ErrorBoundary>,
+    terminal:  <ErrorBoundary name="Terminal"><TerminalPanel /></ErrorBoundary>,
+    usage:     <ErrorBoundary name="Uso"><UsagePanel /></ErrorBoundary>,
   };
 
   return (
@@ -128,6 +135,10 @@ export default function App() {
               <div className="fab-item">
                 <span className="fab-item-label">Financeiro</span>
                 <button className="fab-item-btn" onClick={() => { goTab('finance'); }}>💰</button>
+              </div>
+              <div className="fab-item">
+                <span className="fab-item-label">Terminal</span>
+                <button className="fab-item-btn" onClick={() => { goTab('terminal'); }}>💻</button>
               </div>
               <div className="fab-item">
                 <span className="fab-item-label">Perguntar à IA</span>
@@ -167,12 +178,14 @@ export default function App() {
       {/* ── Desktop grid ────────────────────────────────── */}
       {!isMobile && (
         <div className="desktop-grid">
-          <DashboardPanel />
-          <AgendaPanel />
-          <TaskPanel />
-          <FinancePanel />
-          <AIChat />
-          <BriefingPanel />
+          <ErrorBoundary name="Painel"><DashboardPanel /></ErrorBoundary>
+          <ErrorBoundary name="Agenda"><AgendaPanel /></ErrorBoundary>
+          <ErrorBoundary name="Tarefas"><TaskPanel /></ErrorBoundary>
+          <ErrorBoundary name="Financeiro"><FinancePanel /></ErrorBoundary>
+          <ErrorBoundary name="IA"><AIChat /></ErrorBoundary>
+          <ErrorBoundary name="Briefing"><BriefingPanel /></ErrorBoundary>
+          <ErrorBoundary name="Terminal"><TerminalPanel /></ErrorBoundary>
+          <ErrorBoundary name="Uso"><UsagePanel /></ErrorBoundary>
         </div>
       )}
 

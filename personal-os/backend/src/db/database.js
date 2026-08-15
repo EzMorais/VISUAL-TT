@@ -88,6 +88,38 @@ function initDB() {
       session_id TEXT DEFAULT 'web',
       created_at TEXT DEFAULT (datetime('now'))
     );
+
+    -- Durable facts about the user (preferences, routine, life context) that
+    -- get folded into every Claude conversation — chat, terminal, voice, briefing.
+    CREATE TABLE IF NOT EXISTS memory (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      fact TEXT NOT NULL,
+      category TEXT DEFAULT 'geral',
+      created_at TEXT DEFAULT (datetime('now'))
+    );
+
+    -- Errors captured from the frontend or backend, with Claude's diagnosis
+    -- attached — the app's self-diagnostic log, surfaced in the Terminal tab.
+    CREATE TABLE IF NOT EXISTS error_log (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      source TEXT NOT NULL,
+      message TEXT NOT NULL,
+      stack TEXT,
+      context TEXT,
+      diagnosis TEXT,
+      created_at TEXT DEFAULT (datetime('now'))
+    );
+
+    -- Every Claude API call recorded here — powers the "Uso" tab so you can
+    -- see how much you've used today/this month, and where it went.
+    CREATE TABLE IF NOT EXISTS api_usage (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      feature TEXT NOT NULL,
+      model TEXT NOT NULL,
+      input_tokens INTEGER NOT NULL DEFAULT 0,
+      output_tokens INTEGER NOT NULL DEFAULT 0,
+      created_at TEXT DEFAULT (datetime('now'))
+    );
   `);
 
   console.log('✅ Banco de dados inicializado');

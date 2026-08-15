@@ -62,6 +62,60 @@ export const voice = {
   command: (command, sessionId = 'voice') => req('/voice/command', { method: 'POST', body: { command, sessionId } }),
 };
 
+export const terminal = {
+  history: (sessionId = 'terminal') => req(`/terminal/history?sessionId=${sessionId}`),
+  clearHistory: (sessionId = 'terminal') => req(`/terminal/history?sessionId=${sessionId}`, { method: 'DELETE' }),
+  // Server-Sent Events over a POST body — fetch's streaming reader instead of
+  // EventSource (which can't send a POST body). Calls onChunk as text arrives,
+  // onDone when the reply is complete, onError if the stream fails.
+  async streamCommand(command, sessionId, { onChunk, onDone, onError }) {
+    try {
+      const res = await fetch(`${BASE}/terminal/stream`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ command, sessionId }),
+      });
+      if (!res.ok || !res.body) throw new Error('Falha ao conectar ao terminal');
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+
+        const events = buffer.split('\n\n');
+        buffer = events.pop(); // last chunk may be incomplete
+
+        for (const raw of events) {
+          const eventLine = raw.split('\n').find((l) => l.startsWith('event: '));
+          const dataLine = raw.split('\n').find((l) => l.startsWith('data: '));
+          if (!eventLine || !dataLine) continue;
+          const type = eventLine.slice(7).trim();
+          const data = JSON.parse(dataLine.slice(6));
+
+          if (type === 'chunk') onChunk?.(data.text);
+          if (type === 'done') onDone?.();
+          if (type === 'error') onError?.(data.message);
+        }
+      }
+    } catch (err) {
+      onError?.(err.message);
+    }
+  },
+};
+
+export const diagnostics = {
+  log: () => req('/diagnostics/log'),
+};
+
+export const usage = {
+  summary: () => req('/usage/summary'),
+  daily: (days = 14) => req(`/usage/daily?days=${days}`),
+};
+
 export const health = {
   check: () => req('/health'),
 };

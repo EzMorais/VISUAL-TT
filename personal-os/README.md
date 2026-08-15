@@ -90,6 +90,18 @@ Um canal WebSocket (`/ws`) liga todos os dispositivos conectados. Criou uma tare
 ### 🔄 Atualizações automáticas
 O dashboard avisa sozinho quando existe uma versão mais nova (banner com botão "Atualizar"). O app de desktop vai além: baixa e instala atualizações sozinho via GitHub Releases. Veja [`ATUALIZACOES.md`](./ATUALIZACOES.md) para o passo a passo de publicar uma nova versão.
 
+### 💻 Terminal — conectado ao Claude, de qualquer lugar
+Uma aba de terminal de verdade, com streaming em tempo real, para continuar trabalhando em ideias e projetos direto do celular. Não é um shell do sistema — é um chat com o Claude num visual de linha de comando, com histórico (seta ↑↓), comandos rápidos (`/lembrar`, `/memoria`, `/limpar`) e a mesma memória que o resto do app usa.
+
+### 🧠 Memória adaptável
+Guarde fatos sobre você (`/lembrar trabalho como designer`, `/lembrar prefiro respostas curtas`) e o Claude passa a usar isso em **todas** as conversas — chat, terminal, voz e briefing — sem você repetir contexto toda vez.
+
+### 🩹 Autodiagnóstico de erros
+Se algo quebra em qualquer tela do app, o erro é capturado automaticamente, o Claude é consultado sobre a causa provável, e o diagnóstico aparece ao vivo na aba Terminal. Cada painel do dashboard é isolado — se um travar, o resto continua funcionando normalmente.
+
+### 📊 Uso
+Acompanhe quantos tokens você consumiu hoje, no mês, e em qual área (chat, terminal, voz, WhatsApp, briefing) — com gráfico dos últimos 14 dias. Custo em R$ é opcional (veja `CLAUDE_INPUT_PRICE_PER_1M` no `.env.example`).
+
 ---
 
 ## Como funciona
@@ -358,19 +370,17 @@ Sem o Google Calendar, a agenda funciona como um espaço para criar eventos manu
 
 O dashboard adapta a visualização conforme o dispositivo:
 
-**Computador** — seis painéis simultâneos em grade:
+**Computador** — oito painéis simultâneos em grade:
 
 ```
-┌───────────────┬───────────────┬───────────────┐
-│  🎯  Painel   │  📅  Agenda   │  ✅  Tarefas  │
-│               │               │               │
-├───────────────┼───────────────┼───────────────┤
-│  💰 Financ.   │  🤖  IA Chat  │ ☀️  Briefing  │
-│               │               │               │
-└───────────────┴───────────────┴───────────────┘
+┌───────────┬───────────┬───────────┬───────────┐
+│ 🎯 Painel │ 📅 Agenda │ ✅Tarefas │ 💰Financ. │
+├───────────┼───────────┼───────────┼───────────┤
+│ 🤖IA Chat │ ☀️Briefing│ 💻Terminal│ 📊  Uso   │
+└───────────┴───────────┴───────────┴───────────┘
 ```
 
-**iPhone** — painel único com navegação por abas e **swipe horizontal** para trocar de seção. Botão ⚡ flutuante para ações rápidas (nova tarefa, lembrete, financeiro, IA). Botão 🎙️ no topo para comando de voz em qualquer tela.
+**iPhone** — painel único com navegação por abas (rolagem horizontal se não couber tudo na tela) e **swipe horizontal** para trocar de seção. Botão ⚡ flutuante para ações rápidas (nova tarefa, lembrete, financeiro, terminal, IA). Botão 🎙️ no topo para comando de voz em qualquer tela.
 
 ---
 
@@ -429,7 +439,10 @@ personal-os/
 │           ├── briefing.js
 │           ├── reminders.js
 │           ├── finance.js      ← contas, transações, orçamento, metas
-│           └── voice.js        ← comando de voz / Siri Shortcuts
+│           ├── voice.js        ← comando de voz / Siri Shortcuts
+│           ├── terminal.js     ← chat com Claude via SSE (streaming)
+│           ├── diagnostics.js  ← captura + diagnóstico de erros
+│           └── usage.js        ← estatísticas de tokens/custo
 │
 └── frontend/
     └── src/
@@ -445,7 +458,10 @@ personal-os/
             ├── TaskPanel.jsx
             ├── FinancePanel.jsx    ← área financeira
             ├── VoiceButton.jsx     ← mic (Web Speech API) + TTS
+            ├── TerminalPanel.jsx   ← chat com Claude em tempo real (SSE)
+            ├── UsagePanel.jsx      ← tokens e custo estimado
             ├── UpdateBanner.jsx    ← avisa quando existe versão nova
+            ├── ErrorBoundary.jsx   ← isola falhas por painel + reporta erro
             ├── AIChat.jsx
             ├── BriefingPanel.jsx
             └── QuickModal.jsx  ← criação rápida mobile
