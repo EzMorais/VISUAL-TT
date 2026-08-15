@@ -24,8 +24,15 @@ const TABS = [
   { id: 'usage',     label: 'Uso',        icon: '📊' },
 ];
 
+// Android PWA home-screen shortcuts (and any deep link) land here as
+// ?tab=finance — read once on load so the app opens straight to that panel.
+function initialTabFromUrl() {
+  const tab = new URLSearchParams(window.location.search).get('tab');
+  return TABS.some((t) => t.id === tab) ? tab : 'agenda';
+}
+
 export default function App() {
-  const [activeTab, setActiveTab] = useState('agenda');
+  const [activeTab, setActiveTab] = useState(initialTabFromUrl);
   const [isOnline, setIsOnline] = useState(true);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [fabOpen, setFabOpen] = useState(false);
@@ -50,6 +57,16 @@ export default function App() {
     check();
     const t = setInterval(check, 30_000);
     return () => clearInterval(t);
+  }, []);
+
+  // Handle ?action=new-task from an Android home-screen shortcut, then
+  // clean the URL so a refresh doesn't keep reopening the modal.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('action') === 'new-task') {
+      setModal('task');
+      window.history.replaceState({}, '', window.location.pathname);
+    }
   }, []);
 
   // Swipe to change tabs

@@ -10,7 +10,7 @@
 ```
 
 **Seu ecossistema pessoal de produtividade.**  
-Dashboard no Windows · App no iPhone · Bot no WhatsApp · Conexão via Tailscale.
+Dashboard no Windows · App no iPhone e Android · Bot no WhatsApp · Conexão via Tailscale.
 
 ![Node.js](https://img.shields.io/badge/Node.js-22-339933?style=flat-square&logo=node.js&logoColor=white)
 ![React](https://img.shields.io/badge/React-18-61DAFB?style=flat-square&logo=react&logoColor=black)
@@ -26,7 +26,7 @@ Dashboard no Windows · App no iPhone · Bot no WhatsApp · Conexão via Tailsca
 
 ## O que é o Personal OS?
 
-Personal OS é um **assistente pessoal que roda no seu próprio computador** e te acompanha onde você estiver. Ele conecta sua agenda, suas tarefas e uma IA em um único sistema — acessível pelo dashboard no Windows, pelo iPhone como um app instalado, e pelo WhatsApp para acesso rápido sem abrir nada.
+Personal OS é um **assistente pessoal que roda no seu próprio computador** e te acompanha onde você estiver. Ele conecta sua agenda, suas tarefas e uma IA em um único sistema — acessível pelo dashboard no Windows, pelo celular (iPhone ou Android) como um app instalado, e pelo WhatsApp para acesso rápido sem abrir nada.
 
 Você não depende de nenhum serviço externo pago. Tudo roda localmente, seus dados ficam com você, e o Tailscale mantém a conexão segura entre todos os dispositivos de qualquer lugar do mundo.
 
@@ -77,11 +77,11 @@ Contas, transações, orçamento por categoria e metas de economia. Registre gas
 ### 🎯 Painel de objetivos com gráficos
 Uma aba só para responder "o que eu preciso fazer agora": prioridades do dia (tarefas urgentes, próximo compromisso, orçamento estourado) e gráficos visuais — anel de tarefas concluídas, barras de gasto dos últimos 7 dias e anéis de progresso de cada meta.
 
-### 🎙️ Comando de voz + Siri
-Segure o botão de microfone no dashboard e fale — funciona em português, direto do Safari no iPhone. Também dá para acionar por **Atalho da Siri** ("Ei Siri, Personal OS...") usando a mesma API. Veja [`SIRI-SHORTCUTS.md`](./SIRI-SHORTCUTS.md).
+### 🎙️ Comando de voz — iPhone e Android
+Segure o botão de microfone no dashboard e fale — funciona em português, direto do navegador, em qualquer celular. No iPhone, dá pra acionar por **Atalho da Siri** ("Ei Siri, Personal OS..."); no Android, pelo **Tasker** (ou MacroDroid, de graça) — os dois usam a mesma API. Veja [`SIRI-SHORTCUTS.md`](./SIRI-SHORTCUTS.md) e [`ANDROID-SHORTCUTS.md`](./ANDROID-SHORTCUTS.md).
 
-### 📡 Tempo real entre PC e iPhone
-Um canal WebSocket (`/ws`) liga todos os dispositivos conectados. Criou uma tarefa no computador? Aparece no iPhone na hora. Registrou um gasto pelo WhatsApp? O painel financeiro do PC atualiza sozinho — sem apertar F5. O selo **AO VIVO** no topo mostra a conexão em tempo real.
+### 📡 Tempo real entre PC e celular
+Um canal WebSocket (`/ws`) liga todos os dispositivos conectados. Criou uma tarefa no computador? Aparece no celular na hora. Registrou um gasto pelo WhatsApp? O painel financeiro do PC atualiza sozinho — sem apertar F5. O selo **AO VIVO** no topo mostra a conexão em tempo real.
 
 ### 🔄 Atualizações automáticas
 O dashboard avisa sozinho quando existe uma versão mais nova (banner com botão "Atualizar"). O app de desktop vai além: baixa e instala atualizações sozinho via GitHub Releases. Veja [`ATUALIZACOES.md`](./ATUALIZACOES.md) para o passo a passo de publicar uma nova versão.
@@ -325,19 +325,33 @@ briefing        → pedir o resumo do dia
 
 ---
 
+## Usando no Android
+
+O Android instala o mesmo PWA sem nenhuma adaptação — e o Chrome tem suporte melhor que o Safari em alguns pontos (atalhos no ícone, por exemplo).
+
+1. Abra o endereço do Personal OS no **Chrome** (`http://SEU-IP-LOCAL:5173` na mesma Wi-Fi, ou `http://100.x.x.x:3001` via Tailscale).
+2. Menu **⋮** (canto superior direito) → **Instalar app**.
+3. Pronto — ícone próprio, tela cheia, sem barra do navegador.
+
+**Atalhos rápidos:** segure o dedo no ícone na tela inicial para pular direto para **Terminal**, **Financeiro**, **Nova tarefa** ou **Agenda**.
+
+**Comando de voz sem tocar na tela:** o Android não tem um "Atalho da Siri" nativo, mas o mesmo resultado sai com o **Tasker** (ou o gratuito **MacroDroid**) — um botão (widget, ladrilho nas configurações rápidas, ou de verdade por voz com o plugin AutoVoice) que ouve o que você fala, manda pro Claude e lê a resposta. Passo a passo completo em [`ANDROID-SHORTCUTS.md`](./ANDROID-SHORTCUTS.md).
+
+---
+
 ## Acesso de qualquer lugar com Tailscale
 
-O Tailscale cria uma rede privada entre seus dispositivos. Uma vez instalado, o iPhone acessa o dashboard do Personal OS como se estivesse na mesma Wi-Fi — mesmo no 4G, no trabalho ou viajando.
+O Tailscale cria uma rede privada entre seus dispositivos. Uma vez instalado, o celular acessa o dashboard do Personal OS como se estivesse na mesma Wi-Fi — mesmo no 4G, no trabalho ou viajando. Tem app tanto para iPhone quanto para Android.
 
 **Instalação:**
 
 1. No Windows: [tailscale.com/download/windows](https://tailscale.com/download/windows) → instalar → fazer login
-2. No iPhone: App Store → buscar **Tailscale** → instalar → login com a mesma conta
+2. No celular: App Store (iPhone) ou Google Play (Android) → buscar **Tailscale** → instalar → login com a mesma conta
 3. Abra o Personal OS normalmente (ele já escuta em `0.0.0.0:3001`, então o Tailscale enxerga sozinho) — descubra seu IP com `tailscale ip -4` no Windows
 
 ```
 Computador  →  http://localhost:3001
-iPhone      →  http://100.x.x.x:3001   ← via Tailscale, em qualquer rede
+Celular     →  http://100.x.x.x:3001   ← via Tailscale, em qualquer rede
 ```
 
 ---
@@ -371,7 +385,7 @@ O dashboard adapta a visualização conforme o dispositivo:
 └───────────┴───────────┴───────────┴───────────┘
 ```
 
-**iPhone** — painel único com navegação por abas (rolagem horizontal se não couber tudo na tela) e **swipe horizontal** para trocar de seção. Botão ⚡ flutuante para ações rápidas (nova tarefa, lembrete, financeiro, terminal, IA). Botão 🎙️ no topo para comando de voz em qualquer tela.
+**Celular (iPhone e Android)** — painel único com navegação por abas (rolagem horizontal se não couber tudo na tela) e **swipe horizontal** para trocar de seção. Botão ⚡ flutuante para ações rápidas (nova tarefa, lembrete, financeiro, terminal, IA). Botão 🎙️ no topo para comando de voz em qualquer tela.
 
 ---
 
@@ -399,7 +413,8 @@ O dashboard adapta a visualização conforme o dispositivo:
 
 ```
 personal-os/
-├── SIRI-SHORTCUTS.md           ← guia do Atalho da Siri
+├── SIRI-SHORTCUTS.md           ← guia do Atalho da Siri (iPhone)
+├── ANDROID-SHORTCUTS.md        ← guia do Tasker/MacroDroid (Android)
 ├── ATUALIZACOES.md             ← como publicar uma nova versão
 │
 ├── .github/workflows/

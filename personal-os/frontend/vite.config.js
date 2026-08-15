@@ -27,6 +27,14 @@ export default defineConfig({
           { src: '/icons/icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any maskable' },
           { src: '/icons/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any maskable' },
         ],
+        // Android: long-press the home screen icon to jump straight into a
+        // panel. iOS Safari ignores this — harmless there.
+        shortcuts: [
+          { name: 'Terminal', url: '/?tab=terminal', icons: [{ src: '/icons/icon-192.png', sizes: '192x192' }] },
+          { name: 'Financeiro', url: '/?tab=finance', icons: [{ src: '/icons/icon-192.png', sizes: '192x192' }] },
+          { name: 'Nova tarefa', url: '/?tab=tasks&action=new-task', icons: [{ src: '/icons/icon-192.png', sizes: '192x192' }] },
+          { name: 'Agenda', url: '/?tab=agenda', icons: [{ src: '/icons/icon-192.png', sizes: '192x192' }] },
+        ],
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,svg,png,woff2}'],
