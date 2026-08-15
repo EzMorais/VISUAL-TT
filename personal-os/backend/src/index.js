@@ -4,13 +4,18 @@ const cors = require('cors');
 const helmet = require('helmet');
 const path = require('path');
 const fs = require('fs');
+const http = require('http');
 const config = require('./config');
 const { initDB } = require('./db/database');
 const { initWhatsApp, sendMessage } = require('./services/whatsapp');
 const { setSendFn: setBriefingSend } = require('./services/briefing');
 const { initScheduler, setSendFn: setSchedulerSend } = require('./services/scheduler');
+const { initRealtime } = require('./services/realtime');
+
+const VERSION = require('../package.json').version;
 
 const app = express();
+const server = http.createServer(app);
 
 // Tailscale handles network-layer auth; allow any origin so the PWA works
 // regardless of which Tailscale IP the iPhone uses to reach this machine.
@@ -45,6 +50,10 @@ app.get('/api/health', (req, res) => {
   });
 });
 
+app.get('/api/version', (req, res) => {
+  res.json({ version: VERSION });
+});
+
 // Serve built React frontend (Tailscale / production mode)
 const PUBLIC_DIR = path.join(__dirname, '../public');
 if (fs.existsSync(PUBLIC_DIR)) {
@@ -63,15 +72,20 @@ async function start() {
   setSchedulerSend(sendMessage);
   initScheduler();
 
+  // Real-time channel: every connected PC dashboard and phone gets pushed
+  // updates the instant something changes, instead of waiting on polling.
+  initRealtime(server, { version: VERSION });
+
   // WhatsApp starts last (shows QR code, may take time)
   await initWhatsApp();
 
   // Bind to 0.0.0.0 so Tailscale (and local network) can reach this server
-  app.listen(config.PORT, '0.0.0.0', () => {
+  server.listen(config.PORT, '0.0.0.0', () => {
     console.log(`\n🚀 Personal OS: http://localhost:${config.PORT}`);
     if (config.TAILSCALE_IP) {
       console.log(`🔒 Tailscale:    http://${config.TAILSCALE_IP}:${config.PORT}`);
     }
+    console.log(`📡 Tempo real:   ws://localhost:${config.PORT}/ws`);
     console.log(`☀️  Briefing diário às ${config.BRIEFING_HOUR}:00 (${config.TIMEZONE})\n`);
   });
 }

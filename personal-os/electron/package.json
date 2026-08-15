@@ -9,6 +9,9 @@
     "rebuild": "electron-rebuild --force --module-dir ../backend",
     "dist": "npm run rebuild && electron-builder --win nsis"
   },
+  "dependencies": {
+    "electron-updater": "^6.3.0"
+  },
   "devDependencies": {
     "electron": "^31.0.0",
     "electron-builder": "^24.13.3",
@@ -19,6 +22,11 @@
     "productName": "Personal OS",
     "directories": {
       "output": "dist"
+    },
+    "publish": {
+      "provider": "github",
+      "owner": "EzMorais",
+      "repo": "VISUAL-TT"
     },
     "files": [
       "main.js",

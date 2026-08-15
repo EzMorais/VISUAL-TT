@@ -4,6 +4,7 @@ const config = require('../config');
 const { getEventsToday, getEventsTomorrow, formatEvent } = require('./calendar');
 const { chat } = require('./ai');
 const { getDB } = require('../db/database');
+const { broadcast } = require('./realtime');
 
 const fmt = (n) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(n ?? 0);
 const curMonth = () => new Date().toISOString().slice(0, 7);
@@ -92,6 +93,7 @@ async function handleCommand(body) {
   if (tarefaMatch) {
     const title = tarefaMatch[1].trim();
     const r = db.prepare(`INSERT INTO tasks (title, priority) VALUES (?, 'medium')`).run(title);
+    broadcast('task:created', db.prepare(`SELECT * FROM tasks WHERE id = ?`).get(r.lastInsertRowid));
     return `✅ Tarefa criada: *${title}* (#${r.lastInsertRowid})`;
   }
 
@@ -100,7 +102,8 @@ async function handleCommand(body) {
     const time = lembreteMatch[1].padStart(5, '0');
     const message = lembreteMatch[2].trim();
     const today = new Date().toISOString().split('T')[0];
-    db.prepare(`INSERT INTO reminders (message, remind_at) VALUES (?, ?)`).run(message, `${today}T${time}:00`);
+    const r = db.prepare(`INSERT INTO reminders (message, remind_at) VALUES (?, ?)`).run(message, `${today}T${time}:00`);
+    broadcast('reminder:created', db.prepare(`SELECT * FROM reminders WHERE id = ?`).get(r.lastInsertRowid));
     return `⏰ Lembrete criado: "${message}" às ${time}`;
   }
 
@@ -136,8 +139,9 @@ async function handleCommand(body) {
     const amount = toAmount(gastoMatch[1]);
     const description = gastoMatch[2].trim();
     if (!amount || Number.isNaN(amount)) return '❌ Não entendi o valor. Ex: gasto 50 mercado';
-    db.prepare(`INSERT INTO transactions (type, amount, description, category, date) VALUES ('expense', ?, ?, 'outros', date('now'))`)
+    const r = db.prepare(`INSERT INTO transactions (type, amount, description, category, date) VALUES ('expense', ?, ?, 'outros', date('now'))`)
       .run(Math.abs(amount), description);
+    broadcast('finance:transaction:created', db.prepare(`SELECT * FROM transactions WHERE id = ?`).get(r.lastInsertRowid));
     return `➖ Gasto registrado: *${fmt(amount)}* — ${description}`;
   }
 
@@ -146,8 +150,9 @@ async function handleCommand(body) {
     const amount = toAmount(receitaMatch[1]);
     const description = receitaMatch[2].trim();
     if (!amount || Number.isNaN(amount)) return '❌ Não entendi o valor. Ex: receita 1000 salário';
-    db.prepare(`INSERT INTO transactions (type, amount, description, category, date) VALUES ('income', ?, ?, 'outros', date('now'))`)
+    const r = db.prepare(`INSERT INTO transactions (type, amount, description, category, date) VALUES ('income', ?, ?, 'outros', date('now'))`)
       .run(Math.abs(amount), description);
+    broadcast('finance:transaction:created', db.prepare(`SELECT * FROM transactions WHERE id = ?`).get(r.lastInsertRowid));
     return `➕ Receita registrada: *${fmt(amount)}* — ${description}`;
   }
 

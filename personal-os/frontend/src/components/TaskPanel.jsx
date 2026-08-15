@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { tasks } from '../services/api';
+import realtime from '../services/realtime';
 
 const PRIORITY_CLASS = { high: 'priority-high', medium: 'priority-medium', low: 'priority-low' };
 const PRIORITY_LABEL = { high: 'Alta', medium: 'Média', low: 'Baixa' };
@@ -28,6 +29,9 @@ export default function TaskPanel() {
   }, [showDone]);
 
   useEffect(() => { load(); }, [load]);
+
+  // Another device (PC, phone, WhatsApp, Siri) changed a task — refresh instantly.
+  useEffect(() => realtime.onPrefix('task:', () => load()), [load]);
 
   async function addTask(e) {
     e.preventDefault();

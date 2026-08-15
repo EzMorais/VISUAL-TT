@@ -1,6 +1,7 @@
 const router = require('express').Router();
 const { getDB } = require('../db/database');
 const { chat } = require('../services/ai');
+const { broadcast } = require('../services/realtime');
 
 const fmt = (n) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(n ?? 0);
 const curMonth = () => new Date().toISOString().slice(0, 7);
@@ -47,16 +48,18 @@ async function runFinanceCommand(cmd) {
   if (cmd.kind === 'expense' || cmd.kind === 'income') {
     const amount = toAmount(cmd.amount);
     if (!amount || Number.isNaN(amount)) return 'Não entendi o valor. Pode repetir?';
-    db.prepare(
+    const r = db.prepare(
       `INSERT INTO transactions (type, amount, description, category, date) VALUES (?, ?, ?, 'outros', date('now'))`
     ).run(cmd.kind, Math.abs(amount), cmd.description || 'sem descrição');
+    broadcast('finance:transaction:created', db.prepare(`SELECT * FROM transactions WHERE id = ?`).get(r.lastInsertRowid));
     return cmd.kind === 'expense'
       ? `Registrado: gasto de ${fmt(amount)} com ${cmd.description}.`
       : `Registrado: recebimento de ${fmt(amount)} de ${cmd.description}.`;
   }
 
   if (cmd.kind === 'task') {
-    db.prepare(`INSERT INTO tasks (title, priority) VALUES (?, 'medium')`).run(cmd.title);
+    const r = db.prepare(`INSERT INTO tasks (title, priority) VALUES (?, 'medium')`).run(cmd.title);
+    broadcast('task:created', db.prepare(`SELECT * FROM tasks WHERE id = ?`).get(r.lastInsertRowid));
     return `Tarefa criada: ${cmd.title}.`;
   }
 

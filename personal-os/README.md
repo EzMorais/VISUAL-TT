@@ -84,6 +84,12 @@ Uma aba só para responder "o que eu preciso fazer agora": prioridades do dia (t
 ### 🎙️ Comando de voz + Siri
 Segure o botão de microfone no dashboard e fale — funciona em português, direto do Safari no iPhone. Também dá para acionar por **Atalho da Siri** ("Ei Siri, Personal OS...") usando a mesma API. Veja [`SIRI-SHORTCUTS.md`](./SIRI-SHORTCUTS.md).
 
+### 📡 Tempo real entre PC e iPhone
+Um canal WebSocket (`/ws`) liga todos os dispositivos conectados. Criou uma tarefa no computador? Aparece no iPhone na hora. Registrou um gasto pelo WhatsApp? O painel financeiro do PC atualiza sozinho — sem apertar F5. O selo **AO VIVO** no topo mostra a conexão em tempo real.
+
+### 🔄 Atualizações automáticas
+O dashboard avisa sozinho quando existe uma versão mais nova (banner com botão "Atualizar"). O app de desktop vai além: baixa e instala atualizações sozinho via GitHub Releases. Veja [`ATUALIZACOES.md`](./ATUALIZACOES.md) para o passo a passo de publicar uma nova versão.
+
 ---
 
 ## Como funciona
@@ -381,8 +387,10 @@ O dashboard adapta a visualização conforme o dispositivo:
 | Mobile | PWA · Workbox · `safe-area-inset` iOS |
 | Rede privada | Tailscale (WireGuard) |
 | Banco de dados | SQLite local — sem servidor externo |
-| App de desktop | Electron + electron-builder (instalador NSIS) |
+| App de desktop | Electron + electron-builder (instalador NSIS) + electron-updater |
 | Voz | Web Speech API (reconhecimento + síntese) |
+| Tempo real | WebSocket nativo (`ws`) — um canal, todos os dispositivos |
+| Visual | Liquid glass — superfícies translúcidas com `backdrop-filter` |
 
 ---
 
@@ -395,6 +403,8 @@ personal-os/
 ├── start.bat                   ← iniciar (modo local, sem instalar app)
 ├── start-tailscale.bat         ← iniciar (modo Tailscale)
 ├── SIRI-SHORTCUTS.md           ← guia do Atalho da Siri
+├── ATUALIZACOES.md             ← como publicar uma nova versão
+├── Publicar-Atualizacao.bat    ← builda + publica release no GitHub
 │
 ├── electron/                   ← empacota o dashboard como app Windows
 │   ├── main.js                 ← janela + bandeja + sobe o backend
@@ -410,7 +420,8 @@ personal-os/
 │       │   ├── calendar.js     ← Google Calendar
 │       │   ├── ai.js           ← Claude (chat + briefing)
 │       │   ├── briefing.js     ← geração do resumo diário
-│       │   └── scheduler.js    ← cron jobs
+│       │   ├── scheduler.js    ← cron jobs
+│       │   └── realtime.js     ← WebSocket — sincroniza PC + iPhone na hora
 │       └── routes/
 │           ├── agenda.js
 │           ├── tasks.js
@@ -424,14 +435,17 @@ personal-os/
     └── src/
         ├── App.jsx             ← layout + swipe + FAB
         ├── index.css           ← design system + breathing animations
-        ├── services/api.js     ← chamadas ao backend
+        ├── services/
+        │   ├── api.js          ← chamadas HTTP ao backend
+        │   └── realtime.js     ← cliente WebSocket (reconexão automática)
         └── components/
-            ├── Header.jsx      ← relógio + status + botão de voz
+            ├── Header.jsx      ← relógio + selo AO VIVO + botão de voz
             ├── DashboardPanel.jsx ← prioridades + gráficos de objetivos
             ├── AgendaPanel.jsx
             ├── TaskPanel.jsx
             ├── FinancePanel.jsx    ← área financeira
             ├── VoiceButton.jsx     ← mic (Web Speech API) + TTS
+            ├── UpdateBanner.jsx    ← avisa quando existe versão nova
             ├── AIChat.jsx
             ├── BriefingPanel.jsx
             └── QuickModal.jsx  ← criação rápida mobile

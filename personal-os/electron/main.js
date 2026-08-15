@@ -1,4 +1,5 @@
 const { app, BrowserWindow, Tray, Menu, shell, nativeTheme } = require('electron');
+const { autoUpdater } = require('electron-updater');
 const { spawn } = require('child_process');
 const path = require('path');
 const fs = require('fs');
@@ -17,6 +18,7 @@ let backendProcess = null;
 let mainWindow = null;
 let tray = null;
 let isQuitting = false;
+let updateReady = false;
 
 function log(line) {
   try { fs.appendFileSync(LOG_FILE, `[${new Date().toISOString()}] ${line}\n`); } catch { /* ignore */ }
@@ -75,22 +77,56 @@ function createWindow() {
   });
 }
 
-function createTray() {
-  tray = new Tray(path.join(__dirname, 'trayicon.png'));
-  tray.setToolTip('Personal OS');
+function refreshTrayMenu() {
+  if (!tray) return;
   tray.setContextMenu(Menu.buildFromTemplate([
     { label: 'Abrir Painel', click: () => { mainWindow?.show(); } },
     { label: 'Ver logs (QR Code do WhatsApp)', click: () => shell.openPath(LOG_FILE) },
     { type: 'separator' },
+    ...(updateReady
+      ? [{ label: '⬇️  Reiniciar para atualizar', click: () => { isQuitting = true; autoUpdater.quitAndInstall(); } }]
+      : [{ label: 'Verificar atualizações', click: () => autoUpdater.checkForUpdates() }]),
+    { type: 'separator' },
     { label: 'Sair', click: () => { isQuitting = true; app.quit(); } },
   ]));
+}
+
+function createTray() {
+  tray = new Tray(path.join(__dirname, 'trayicon.png'));
+  tray.setToolTip('Personal OS');
+  refreshTrayMenu();
   tray.on('click', () => { mainWindow?.show(); });
+}
+
+// Auto-update via GitHub Releases — publishing a new release (see
+// Publicar-Atualizacao.bat) rolls out to every installed desktop copy
+// without anyone having to download or reinstall anything by hand.
+function setupAutoUpdate() {
+  if (!app.isPackaged) return; // no updater in dev mode
+
+  autoUpdater.on('checking-for-update', () => log('Verificando atualizações...'));
+  autoUpdater.on('update-available', (info) => log(`Atualização disponível: ${info.version}`));
+  autoUpdater.on('update-not-available', () => log('Nenhuma atualização disponível.'));
+  autoUpdater.on('error', (err) => log(`Erro no auto-update: ${err.message}`));
+  autoUpdater.on('update-downloaded', (info) => {
+    log(`Atualização ${info.version} baixada — pronta para instalar.`);
+    updateReady = true;
+    refreshTrayMenu();
+    tray?.displayBalloon?.({
+      title: 'Personal OS',
+      content: `Versão ${info.version} pronta. Clique no ícone da bandeja para reiniciar e atualizar.`,
+    });
+  });
+
+  autoUpdater.checkForUpdates();
+  setInterval(() => autoUpdater.checkForUpdates(), 4 * 60 * 60 * 1000); // a cada 4h
 }
 
 app.whenReady().then(() => {
   nativeTheme.themeSource = 'dark';
   startBackend();
   createTray();
+  setupAutoUpdate();
 
   waitForServer((ok) => {
     createWindow();

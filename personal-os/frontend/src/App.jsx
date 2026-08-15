@@ -7,6 +7,7 @@ import BriefingPanel from './components/BriefingPanel';
 import FinancePanel from './components/FinancePanel';
 import DashboardPanel from './components/DashboardPanel';
 import QuickModal from './components/QuickModal';
+import UpdateBanner from './components/UpdateBanner';
 import { health } from './services/api';
 
 const TABS = [
@@ -179,6 +180,8 @@ export default function App() {
       {modal && (
         <QuickModal type={modal} onClose={() => setModal(null)} />
       )}
+
+      <UpdateBanner />
     </div>
   );
 }

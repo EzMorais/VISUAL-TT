@@ -1,5 +1,6 @@
 const router = require('express').Router();
 const { getDB } = require('../db/database');
+const { broadcast } = require('../services/realtime');
 
 const fmt = (n) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(n ?? 0);
 
@@ -70,7 +71,9 @@ router.post('/transactions', (req, res) => {
     db.prepare(`UPDATE accounts SET balance = balance + ? WHERE id = ?`).run(delta, account_id);
   }
 
-  res.status(201).json(db.prepare(`SELECT * FROM transactions WHERE id = ?`).get(r.lastInsertRowid));
+  const tx = db.prepare(`SELECT * FROM transactions WHERE id = ?`).get(r.lastInsertRowid);
+  broadcast('finance:transaction:created', tx);
+  res.status(201).json(tx);
 });
 
 router.delete('/transactions/:id', (req, res) => {
@@ -84,6 +87,7 @@ router.delete('/transactions/:id', (req, res) => {
   }
 
   db.prepare(`DELETE FROM transactions WHERE id = ?`).run(req.params.id);
+  broadcast('finance:transaction:deleted', { id: Number(req.params.id) });
   res.json({ success: true });
 });
 
@@ -101,7 +105,9 @@ router.post('/accounts', (req, res) => {
     `INSERT INTO accounts (name, type, balance, color) VALUES (?, ?, ?, ?)`
   ).run(name.trim(), type, parseFloat(balance), color);
 
-  res.status(201).json(db.prepare(`SELECT * FROM accounts WHERE id = ?`).get(r.lastInsertRowid));
+  const account = db.prepare(`SELECT * FROM accounts WHERE id = ?`).get(r.lastInsertRowid);
+  broadcast('finance:account:created', account);
+  res.status(201).json(account);
 });
 
 router.put('/accounts/:id', (req, res) => {
@@ -111,11 +117,14 @@ router.put('/accounts/:id', (req, res) => {
     `UPDATE accounts SET name = COALESCE(?, name), balance = COALESCE(?, balance),
      color = COALESCE(?, color) WHERE id = ?`
   ).run(name, balance !== undefined ? parseFloat(balance) : null, color, req.params.id);
-  res.json(db.prepare(`SELECT * FROM accounts WHERE id = ?`).get(req.params.id));
+  const account = db.prepare(`SELECT * FROM accounts WHERE id = ?`).get(req.params.id);
+  broadcast('finance:account:updated', account);
+  res.json(account);
 });
 
 router.delete('/accounts/:id', (req, res) => {
   getDB().prepare(`DELETE FROM accounts WHERE id = ?`).run(req.params.id);
+  broadcast('finance:account:deleted', { id: Number(req.params.id) });
   res.json({ success: true });
 });
 
@@ -135,7 +144,9 @@ router.post('/budgets', (req, res) => {
      ON CONFLICT(category, month) DO UPDATE SET limit_amount = excluded.limit_amount`
   ).run(category, parseFloat(limit_amount), m);
 
-  res.json(db.prepare(`SELECT * FROM budgets WHERE category = ? AND month = ?`).get(category, m));
+  const budget = db.prepare(`SELECT * FROM budgets WHERE category = ? AND month = ?`).get(category, m);
+  broadcast('finance:budget:updated', budget);
+  res.json(budget);
 });
 
 // ── Goals ─────────────────────────────────────────────────
@@ -152,7 +163,9 @@ router.post('/goals', (req, res) => {
     `INSERT INTO goals (name, target_amount, current_amount, deadline) VALUES (?, ?, ?, ?)`
   ).run(name.trim(), parseFloat(target_amount), parseFloat(current_amount), deadline || null);
 
-  res.status(201).json(db.prepare(`SELECT * FROM goals WHERE id = ?`).get(r.lastInsertRowid));
+  const goal = db.prepare(`SELECT * FROM goals WHERE id = ?`).get(r.lastInsertRowid);
+  broadcast('finance:goal:created', goal);
+  res.status(201).json(goal);
 });
 
 router.put('/goals/:id/add', (req, res) => {
@@ -160,11 +173,14 @@ router.put('/goals/:id/add', (req, res) => {
   const { amount } = req.body;
   db.prepare(`UPDATE goals SET current_amount = current_amount + ? WHERE id = ?`)
     .run(parseFloat(amount), req.params.id);
-  res.json(db.prepare(`SELECT * FROM goals WHERE id = ?`).get(req.params.id));
+  const goal = db.prepare(`SELECT * FROM goals WHERE id = ?`).get(req.params.id);
+  broadcast('finance:goal:updated', goal);
+  res.json(goal);
 });
 
 router.delete('/goals/:id', (req, res) => {
   getDB().prepare(`DELETE FROM goals WHERE id = ?`).run(req.params.id);
+  broadcast('finance:goal:deleted', { id: Number(req.params.id) });
   res.json({ success: true });
 });
 

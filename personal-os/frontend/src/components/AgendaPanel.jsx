@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { agenda } from '../services/api';
+import realtime from '../services/realtime';
 
 export default function AgendaPanel() {
   const [day, setDay] = useState('today');
@@ -21,6 +22,8 @@ export default function AgendaPanel() {
   }, [day]);
 
   useEffect(() => { load(); }, [load]);
+
+  useEffect(() => realtime.onPrefix('agenda:', () => load()), [load]);
 
   async function addEvent(e) {
     e.preventDefault();

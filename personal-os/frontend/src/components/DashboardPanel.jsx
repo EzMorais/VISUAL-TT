@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { tasks as tasksApi, agenda as agendaApi, finance } from '../services/api';
+import realtime from '../services/realtime';
 
 const fmt = (n) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(n ?? 0);
 const PRIORITY_COLOR = { high: '#ff5252', medium: '#ffcc00', low: '#00e676' };
@@ -32,6 +33,10 @@ export default function DashboardPanel() {
   }, []);
 
   useEffect(() => { load(); }, [load]);
+
+  useEffect(() => realtime.on('*', ({ type }) => {
+    if (type.startsWith('task:') || type.startsWith('finance:') || type.startsWith('agenda:')) load();
+  }), [load]);
 
   if (loading) {
     return (

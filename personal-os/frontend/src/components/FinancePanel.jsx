@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { finance } from '../services/api';
+import realtime from '../services/realtime';
 
 const fmt = (n) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(n ?? 0);
 
@@ -26,6 +27,9 @@ export default function FinancePanel() {
   }, []);
 
   useEffect(() => { load(); }, [load]);
+
+  // Gasto lançado no WhatsApp, por voz ou no outro dispositivo — atualiza na hora.
+  useEffect(() => realtime.onPrefix('finance:', () => load()), [load]);
 
   const result = summary ? summary.monthIncome - summary.monthExpenses : 0;
   const maxCat = summary?.byCategory?.[0]?.total || 1;

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { briefing } from '../services/api';
+import realtime from '../services/realtime';
 
 export default function BriefingPanel() {
   const [content, setContent] = useState('');
@@ -35,6 +36,12 @@ export default function BriefingPanel() {
   }
 
   useEffect(() => { load(); }, []);
+
+  // Se o briefing foi gerado no computador (ou pelo cron da manhã), atualiza aqui sem recarregar.
+  useEffect(() => realtime.on('briefing:generated', (data) => {
+    setContent(data.content || '');
+    setDate(new Date().toISOString().split('T')[0]);
+  }), []);
 
   const dateLabel = date
     ? new Date(date + 'T12:00').toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long' })

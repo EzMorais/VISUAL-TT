@@ -1,5 +1,6 @@
 const router = require('express').Router();
 const { getEventsToday, getEventsTomorrow, formatEvent, createEvent, getAuthUrl, exchangeCode } = require('../services/calendar');
+const { broadcast } = require('../services/realtime');
 
 router.get('/today', async (req, res) => {
   try {
@@ -22,6 +23,7 @@ router.get('/tomorrow', async (req, res) => {
 router.post('/', async (req, res) => {
   try {
     const event = await createEvent(req.body);
+    broadcast('agenda:created', event);
     res.json(event);
   } catch (err) {
     res.status(500).json({ error: err.message });

@@ -1,6 +1,7 @@
 const router = require('express').Router();
 const { generateAndSendBriefing } = require('../services/briefing');
 const { getDB } = require('../db/database');
+const { broadcast } = require('../services/realtime');
 
 router.get('/today', async (req, res) => {
   const db = getDB();
@@ -19,6 +20,7 @@ router.get('/today', async (req, res) => {
 router.post('/generate', async (req, res) => {
   try {
     const content = await generateAndSendBriefing();
+    broadcast('briefing:generated', { content });
     res.json({ content });
   } catch (err) {
     res.status(500).json({ error: err.message });

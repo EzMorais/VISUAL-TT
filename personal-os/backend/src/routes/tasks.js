@@ -1,5 +1,6 @@
 const router = require('express').Router();
 const { getDB } = require('../db/database');
+const { broadcast } = require('../services/realtime');
 
 router.get('/', (req, res) => {
   const db = getDB();
@@ -20,7 +21,9 @@ router.post('/', (req, res) => {
     `INSERT INTO tasks (title, description, priority, due_date) VALUES (?, ?, ?, ?)`
   ).run(title.trim(), description, priority, due_date);
 
-  res.status(201).json(db.prepare(`SELECT * FROM tasks WHERE id = ?`).get(r.lastInsertRowid));
+  const task = db.prepare(`SELECT * FROM tasks WHERE id = ?`).get(r.lastInsertRowid);
+  broadcast('task:created', task);
+  res.status(201).json(task);
 });
 
 router.put('/:id', (req, res) => {
@@ -38,11 +41,14 @@ router.put('/:id', (req, res) => {
      WHERE id = ?`
   ).run(title, description, priority, status, due_date, req.params.id);
 
-  res.json(db.prepare(`SELECT * FROM tasks WHERE id = ?`).get(req.params.id));
+  const task = db.prepare(`SELECT * FROM tasks WHERE id = ?`).get(req.params.id);
+  broadcast('task:updated', task);
+  res.json(task);
 });
 
 router.delete('/:id', (req, res) => {
   getDB().prepare(`DELETE FROM tasks WHERE id = ?`).run(req.params.id);
+  broadcast('task:deleted', { id: Number(req.params.id) });
   res.json({ success: true });
 });
 

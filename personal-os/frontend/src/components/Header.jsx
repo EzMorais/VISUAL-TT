@@ -1,16 +1,20 @@
 import { useState, useEffect } from 'react';
 import VoiceButton from './VoiceButton';
+import realtime from '../services/realtime';
 
 const DIAS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
 const MESES = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
 
 export default function Header({ isOnline }) {
   const [now, setNow] = useState(new Date());
+  const [live, setLive] = useState(realtime.getStatus());
 
   useEffect(() => {
     const t = setInterval(() => setNow(new Date()), 1000);
     return () => clearInterval(t);
   }, []);
+
+  useEffect(() => realtime.on('_status', setLive), []);
 
   const hh = String(now.getHours()).padStart(2, '0');
   const mm = String(now.getMinutes()).padStart(2, '0');
@@ -30,6 +34,10 @@ export default function Header({ isOnline }) {
       </div>
 
       <div className="header-status">
+        <span className={`live-pill ${live}`} title="Conexão em tempo real com todos os dispositivos">
+          <i />
+          {live === 'online' ? 'AO VIVO' : 'RECONECTANDO'}
+        </span>
         <VoiceButton />
         <div className={`status-dot ${isOnline ? '' : 'offline'}`} />
         <span style={{ display: 'none' }}>{isOnline ? 'Online' : 'Offline'}</span>
