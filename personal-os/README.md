@@ -32,23 +32,19 @@ Você não depende de nenhum serviço externo pago. Tudo roda localmente, seus d
 
 ---
 
-## Instalação de 1 clique (Windows)
+## Instalação (Windows) — só o instalador, sem terminal
 
-Não precisa mexer em terminal nem entender de código. Baixe o projeto e rode um único arquivo:
+Não precisa de Node.js, terminal, nem rodar nada na mão. Um workflow do GitHub Actions builda o instalador pra você.
 
-```
-Instalar-Personal-OS.bat
-```
+1. Vá na aba **[Actions](../../actions/workflows/build-installer.yml)** deste repositório.
+2. Clique em **Run workflow** (botão à direita) → **Run workflow** de novo para confirmar.
+3. Espere uns 5–10 minutos — o GitHub compila tudo num Windows limpo, na nuvem.
+4. Abra a execução que terminou, role até **Artifacts**, baixe **Personal-OS-Setup**.
+5. Extraia o `.zip` baixado (ele contém o `Personal OS Setup x.x.x.exe`) e dê 2 cliques.
 
-Esse instalador:
+O instalador é um `.exe` de verdade (NSIS): tela própria, opção de **escolher em qual pasta/disco instalar** (botão "Browse" na tela de instalação — funciona com qualquer drive, C:, D:, etc.), cria ícone na Área de Trabalho e atalho no Menu Iniciar, e já deixa o Personal OS configurado para abrir sozinho quando o Windows liga (dá pra desligar isso depois pelo ícone da bandeja do sistema).
 
-- ✅ Instala tudo sozinho (backend, frontend, app de desktop)
-- ✅ Cria um **ícone na Área de Trabalho** — "Personal OS", como qualquer app
-- ✅ Cria atalho no **Menu Iniciar**
-- ✅ Configura o app para **abrir sozinho quando o Windows liga**
-- ✅ Abre o Personal OS em uma janela própria (não é uma aba do navegador)
-
-Se quiser gerar um instalador `.exe` de verdade — para guardar, copiar para outro PC ou subir no seu Google Drive — rode `Criar-Instalador-Exe.bat`. Ele empacota tudo em `electron\dist\Personal OS Setup.exe`, pronto para 2 cliques em qualquer Windows.
+> Publicar uma **tag** `personal-os-vX.Y.Z` (em vez de rodar manualmente) além de gerar o instalador também cria uma Release no GitHub — é o que alimenta a atualização automática do app (veja [`ATUALIZACOES.md`](./ATUALIZACOES.md)).
 
 ---
 
@@ -174,19 +170,16 @@ GOOGLE_REFRESH_TOKEN=
 
 ### 3 · Inicie
 
-**Modo local** — mesma rede Wi-Fi:
+**No Windows, sem mexer em código:** use o instalador `.exe` (veja a seção [Instalação](#instalação-windows--só-o-instalador-sem-terminal) acima) — ele já sobe tudo numa janela própria, em **uma porta única (3001)**, acessível tanto na rede local quanto pelo Tailscale.
 
-```
-start.bat
-```
+**Rodando direto do código** (desenvolvimento, ou outro sistema operacional):
 
-**Modo Tailscale** — de qualquer lugar, qualquer rede:
-
-```
-start-tailscale.bat
+```bash
+cd backend && npm install && npm run dev    # janela 1
+cd frontend && npm install && npm run dev   # janela 2
 ```
 
-O script detecta seu IP do Tailscale, builda o frontend e sobe tudo em **uma porta única (3001)**.
+O backend sobe em `http://localhost:3001`, o frontend em `http://localhost:5173` (proxying `/api` e `/ws` para o backend). Para rodar em modo Tailscale a partir do código, defina `VITE_API_URL=http://SEU-IP-TAILSCALE:3001/api` antes de `npm run build` no frontend e sirva o `backend/public` resultante com `npm start` no backend.
 
 ---
 
@@ -259,8 +252,8 @@ Mande mensagem para você mesmo no WhatsApp. O bot responde instantaneamente.
 
 ### Passo 1 — Inicie o Personal OS no computador
 
-Execute `start.bat` (mesma rede) ou `start-tailscale.bat` (qualquer lugar).  
-Aguarde aparecer no terminal:
+Abra o Personal OS (ícone na Área de Trabalho, se você usou o instalador `.exe`) ou rode `npm run dev` no backend e no frontend (modo desenvolvedor — veja a seção "Início rápido" acima).
+Aguarde aparecer nos logs:
 
 ```
 🚀 Personal OS: http://localhost:3001
@@ -340,13 +333,11 @@ O Tailscale cria uma rede privada entre seus dispositivos. Uma vez instalado, o 
 
 1. No Windows: [tailscale.com/download/windows](https://tailscale.com/download/windows) → instalar → fazer login
 2. No iPhone: App Store → buscar **Tailscale** → instalar → login com a mesma conta
-3. Execute **`start-tailscale.bat`** — ele detecta o IP automaticamente
+3. Abra o Personal OS normalmente (ele já escuta em `0.0.0.0:3001`, então o Tailscale enxerga sozinho) — descubra seu IP com `tailscale ip -4` no Windows
 
 ```
-Personal OS iniciado!
-
-  Computador  →  http://localhost:3001
-  iPhone      →  http://100.x.x.x:3001   ← via Tailscale, em qualquer rede
+Computador  →  http://localhost:3001
+iPhone      →  http://100.x.x.x:3001   ← via Tailscale, em qualquer rede
 ```
 
 ---
@@ -408,16 +399,14 @@ O dashboard adapta a visualização conforme o dispositivo:
 
 ```
 personal-os/
-├── Instalar-Personal-OS.bat    ← instalador de 1 clique (app + atalhos)
-├── Criar-Instalador-Exe.bat    ← gera Personal-OS-Setup.exe distribuível
-├── start.bat                   ← iniciar (modo local, sem instalar app)
-├── start-tailscale.bat         ← iniciar (modo Tailscale)
 ├── SIRI-SHORTCUTS.md           ← guia do Atalho da Siri
 ├── ATUALIZACOES.md             ← como publicar uma nova versão
-├── Publicar-Atualizacao.bat    ← builda + publica release no GitHub
+│
+├── .github/workflows/
+│   └── build-installer.yml     ← builda o instalador .exe no GitHub Actions
 │
 ├── electron/                   ← empacota o dashboard como app Windows
-│   ├── main.js                 ← janela + bandeja + sobe o backend
+│   ├── main.js                 ← janela + bandeja + auto-start + sobe o backend
 │   └── package.json            ← config do electron-builder (NSIS)
 │
 ├── backend/

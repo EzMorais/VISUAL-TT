@@ -79,10 +79,21 @@ function createWindow() {
 
 function refreshTrayMenu() {
   if (!tray) return;
+  const startsAtLogin = app.isPackaged ? app.getLoginItemSettings().openAtLogin : false;
+
   tray.setContextMenu(Menu.buildFromTemplate([
     { label: 'Abrir Painel', click: () => { mainWindow?.show(); } },
     { label: 'Ver logs (QR Code do WhatsApp)', click: () => shell.openPath(LOG_FILE) },
     { type: 'separator' },
+    {
+      label: 'Iniciar com o Windows',
+      type: 'checkbox',
+      checked: startsAtLogin,
+      enabled: app.isPackaged,
+      click: (item) => {
+        app.setLoginItemSettings({ openAtLogin: item.checked });
+      },
+    },
     ...(updateReady
       ? [{ label: '⬇️  Reiniciar para atualizar', click: () => { isQuitting = true; autoUpdater.quitAndInstall(); } }]
       : [{ label: 'Verificar atualizações', click: () => autoUpdater.checkForUpdates() }]),
@@ -98,9 +109,9 @@ function createTray() {
   tray.on('click', () => { mainWindow?.show(); });
 }
 
-// Auto-update via GitHub Releases — publishing a new release (see
-// Publicar-Atualizacao.bat) rolls out to every installed desktop copy
-// without anyone having to download or reinstall anything by hand.
+// Auto-update via GitHub Releases — a Release published by the
+// "Build Installer" GitHub Actions workflow rolls out to every installed
+// desktop copy without anyone having to download or reinstall by hand.
 function setupAutoUpdate() {
   if (!app.isPackaged) return; // no updater in dev mode
 
@@ -122,8 +133,17 @@ function setupAutoUpdate() {
   setInterval(() => autoUpdater.checkForUpdates(), 4 * 60 * 60 * 1000); // a cada 4h
 }
 
+function enableAutoStartOnFirstRun() {
+  if (!app.isPackaged) return;
+  const marker = path.join(app.getPath('userData'), '.first-run-done');
+  if (fs.existsSync(marker)) return;
+  app.setLoginItemSettings({ openAtLogin: true });
+  try { fs.writeFileSync(marker, new Date().toISOString()); } catch { /* not critical */ }
+}
+
 app.whenReady().then(() => {
   nativeTheme.themeSource = 'dark';
+  enableAutoStartOnFirstRun();
   startBackend();
   createTray();
   setupAutoUpdate();

@@ -20,6 +20,8 @@
   "build": {
     "appId": "com.personalos.desktop",
     "productName": "Personal OS",
+    "asar": true,
+    "compression": "maximum",
     "directories": {
       "output": "dist"
     },
@@ -40,7 +42,11 @@
           "**/*",
           "!data/*.db*",
           "!data/whatsapp-session",
-          "!.env"
+          "!.env",
+          "!**/*.md",
+          "!**/test/**",
+          "!**/tests/**",
+          "!**/*.map"
         ]
       }
     ],

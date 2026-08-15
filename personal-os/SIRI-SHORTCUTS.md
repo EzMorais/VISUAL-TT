@@ -40,7 +40,7 @@ Qualquer outra frase (agenda, perguntas gerais, pedir um resumo do dia) cai auto
 
 ### Pré-requisito
 
-O Personal OS precisa estar acessível a partir do iPhone — via Wi-Fi local ou, para funcionar em qualquer lugar, via **Tailscale** (veja o README principal). Anote o endereço que aparece no terminal ao rodar `start-tailscale.bat`, por exemplo:
+O Personal OS precisa estar acessível a partir do iPhone — via Wi-Fi local ou, para funcionar em qualquer lugar, via **Tailscale** (veja o README principal). Com o Tailscale conectado no computador, descubra o endereço rodando `tailscale ip -4` no Windows, por exemplo:
 
 ```
 http://100.x.x.x:3001
